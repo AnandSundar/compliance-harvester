@@ -1,0 +1,16 @@
+{
+    "trails": [
+        {
+            "name": "company-main-trail",
+            "s3_bucket_name": "company-logs",
+            "s3_key_prefix": "cloudtrail/",
+            "is_multi_region_trail": true,
+            "is_organization_trail": false,
+            "log_file_validation_enabled": true,
+            "cloud_watch_logs_log_group_arn": "arn:aws:logs:us-east-1:123456789012:log-group:CloudTrail:",
+            "kms_key_id": "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012",
+            "is_logging": true,
+            "latest_delivery_time": "2026-03-04T20:00:00Z"
+        }
+    ]
+}

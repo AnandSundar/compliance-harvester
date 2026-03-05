@@ -1,0 +1,66 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "IAMReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListUsers",
+                "iam:ListMfaDevices",
+                "iam:GetAccountPasswordPolicy",
+                "iam:ListAccessKeys",
+                "iam:GetUser",
+                "iam:GetAccountSummary",
+                "iam:ListUserPolicies",
+                "iam:ListAttachedUserPolicies"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "S3ReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListAllMyBuckets",
+                "s3:ListBucket",
+                "s3:GetBucketEncryption",
+                "s3:GetPublicAccessBlock",
+                "s3:GetBucketPolicy",
+                "s3:GetBucketVersioning",
+                "s3:GetBucketLogging",
+                "s3:GetBucketLocation"
+            ],
+            "Resource": "arn:aws:s3:::*"
+        },
+        {
+            "Sid": "CloudTrailReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "cloudtrail:DescribeTrails",
+                "cloudtrail:GetTrailStatus",
+                "cloudtrail:GetEventSelectors",
+                "cloudtrail:LookupEvents"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ConfigReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "config:DescribeConfigurationRecorders",
+                "config:DescribeDeliveryChannels",
+                "config:DescribeConfigRules",
+                "config:GetComplianceSummaryByConfigRule",
+                "config:GetComplianceDetailsByConfigRule"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "STSReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "sts:GetCallerIdentity"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
