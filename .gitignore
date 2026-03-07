@@ -37,7 +37,23 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Evidence outputs (local running)
+# Project-specific exclusions
+# Exclude all Python files
+*.py
+
+# Exclude config files
+config.yaml
+policy.json
+
+# Exclude all directories
+collectors/
+reporters/
+sample-output/
+evidence-output/
+sample-output/raw/
+evidence-output/raw/
+
+# Evidence outputs and Excel files
 evidence-output/
 *.xlsx
 
