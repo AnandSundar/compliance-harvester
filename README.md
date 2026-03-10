@@ -64,39 +64,52 @@ graph LR
     C --> E[S3]
     C --> F[CloudTrail]
     C --> G[AWS Config]
-    D --> H[Control Mapper]
-    E --> H
-    F --> H
-    G --> H
-    H --> I[Evidence Builder]
-    I --> J[Excel Report]
-    I --> K[JSON Manifest]
-    J --> L[Evidence Package]
-    K --> L
+    C --> H[EC2]
+    C --> I[VPC]
+    C --> J[Security Groups]
+    C --> K[RDS]
+    C --> L[KMS]
+    C --> M[GuardDuty]
+    C --> N[Backup]
+    D --> O[Control Mapper]
+    E --> O
+    F --> O
+    G --> O
+    H --> O
+    I --> O
+    J --> O
+    K --> O
+    L --> O
+    M --> O
+    N --> O
+    O --> P[Evidence Builder]
+    P --> Q[Excel Report]
+    P --> R[JSON Manifest]
+    Q --> S[Evidence Package]
+    R --> S
 ```
 
-When you run the tool, it connects to your AWS account using read-only API calls, collects security configurations across IAM, S3, CloudTrail, and AWS Config, applies the dual control mapping, and outputs a structured evidence package ready for auditors.
+When you run the tool, it connects to your AWS account using read-only API calls, collects security configurations across multiple AWS services, applies the dual control mapping, and outputs a structured evidence package ready for auditors.
 
 ---
 
-## SOC 2 ↔ GDPR Control Mapping
+## Supported AWS Services & Controls
 
-This is the core differentiator. Each automated check maps to both frameworks simultaneously, eliminating duplicated effort.
+### Currently Automated (28+ Controls)
 
-| Check | What It Verifies | SOC 2 Criterion | GDPR Article 32 | Severity |
-|-------|-----------------|-----------------|-----------------|----------|
-| MFA Enabled | All users require two-factor login | CC6.1, CC6.7 | Art. 32(1)(b) | 🔴 HIGH |
-| Password Policy Strength | Minimum 8 chars, complexity requirements | CC6.1, CC6.3 | Art. 32(1)(b) | 🔴 HIGH |
-| Password Expiry | Passwords rotate within 90 days | CC6.1, CC6.3 | Art. 32(1)(b) | 🟡 MEDIUM |
-| Unused Credentials | Keys unused >90 days flagged | CC6.1, CC6.7 | Art. 32(1)(b) | 🟡 MEDIUM |
-| Root Account MFA | Emergency access protected | CC6.1, CC6.7 | Art. 32(1)(b), (d) | 🔴 HIGH |
-| S3 Default Encryption | Data at rest encrypted by default | CC6.7, CC6.8 | Art. 32(1)(a) | 🔴 HIGH |
-| S3 Public Access Block | Buckets protected from public access | CC6.1, CC6.7 | Art. 32(1)(b) | 🔴 HIGH |
-| S3 Versioning | Object versioning enabled for durability | CC6.7, CC6.8 | Art. 32(1)(c) | 🟡 MEDIUM |
-| CloudTrail Enabled | API activity logging active | CC7.2, CC7.3 | Art. 32(1)(d) | 🔴 HIGH |
-| CloudTrail Multi-Region | Logging covers all regions | CC7.2, CC7.3 | Art. 32(1)(d) | 🔴 HIGH |
-| CloudTrail Log Validation | Log file integrity verified | CC7.2, CC7.3, CC7.4 | Art. 32(1)(c), (d) | 🔴 HIGH |
-| AWS Config Rules | Compliance monitoring active | CC7.2, CC7.3 | Art. 32(1)(d) | 🟡 MEDIUM |
+| Service | Controls | SOC 2 Criteria |
+|---------|----------|-----------------|
+| **IAM** | MFA enabled, password policy, unused credentials, root account MFA | CC6.1, CC6.3, CC6.7 |
+| **S3** | Default encryption, public access block, bucket policy, versioning, access logging | CC6.7, CC6.8, CC7.2, CC7.3 |
+| **CloudTrail** | Trail enabled, multi-region, log validation, encryption | CC6.7, CC6.8, CC7.2, CC7.3, CC7.4 |
+| **AWS Config** | Config enabled, compliance status | CC7.2, CC7.3, CC7.4 |
+| **EC2** | Instance profile, SSH key usage, VPC association, termination protection | CC6.1, CC6.6, CC6.7 |
+| **VPC** | Flow logs, subnet public access, NAT gateway, route tables | CC6.6, CC7.2 |
+| **Security Groups** | Unrestricted SSH, unrestricted RDP, overly permissive rules | CC6.6, CC6.7 |
+| **RDS** | Encryption at rest, backup retention, multi-AZ, public access, deletion protection | CC6.7, CC6.8, CC7.5 |
+| **KMS** | Key rotation, key policy, key usage | CC6.7, CC6.8 |
+| **GuardDuty** | Detector enabled, findings, admin account | CC7.1, CC7.2 |
+| **Backup** | Backup vaults, backup plans, recovery point retention | CC7.5 |
 
 ---
 
@@ -105,38 +118,21 @@ This is the core differentiator. Each automated check maps to both frameworks si
 The tool generates a structured output folder ready for auditor review:
 
 ```
-evidence-package-2026-03-04-210500/
+evidence-output/
 ├── raw/
-│   ├── iam.json           # Full IAM API responses
-│   ├── s3.json            # Full S3 API responses
-│   ├── cloudtrail.json    # Full CloudTrail API responses
-│   └── config.json        # Full AWS Config responses
-├── report.xlsx            # Excel workbook with 3 sheets
-└── manifest.json          # Run metadata and summary
-```
-
-### Sample manifest.json Snippet
-
-```json
-{
-  "manifest_version": "1.0",
-  "tool_info": {
-    "name": "compliance-harvester",
-    "version": "1.0.0"
-  },
-  "run_metadata": {
-    "timestamp": "2026-03-04T21:05:00Z",
-    "aws_account_id": "123456789012",
-    "region": "us-east-1"
-  },
-  "summary": {
-    "total_checks": 28,
-    "pass_count": 22,
-    "fail_count": 4,
-    "manual_review_count": 2,
-    "pass_rate": 78.57
-  }
-}
+│   ├── iam.json              # Full IAM API responses
+│   ├── s3.json              # Full S3 API responses
+│   ├── cloudtrail.json       # Full CloudTrail API responses
+│   ├── config.json           # Full AWS Config responses
+│   ├── ec2.json             # Full EC2 API responses
+│   ├── vpc.json             # Full VPC API responses
+│   ├── security_groups.json  # Full Security Group responses
+│   ├── rds.json             # Full RDS API responses
+│   ├── kms.json             # Full KMS API responses
+│   ├── guardduty.json       # Full GuardDuty API responses
+│   └── backup.json          # Full Backup API responses
+├── report.xlsx              # Excel workbook with findings
+└── manifest.json            # Run metadata and summary
 ```
 
 ### Output File Guide
@@ -164,7 +160,15 @@ compliance-harvester/
 │   ├── iam.py             # IAM: MFA, password policy, credentials
 │   ├── s3.py              # S3: encryption, access, policies
 │   ├── cloudtrail.py      # CloudTrail: logging, validation
-│   └── config.py          # AWS Config: compliance rules
+│   ├── config.py          # AWS Config: compliance rules
+│   ├── ec2.py             # EC2: instances, security, VPC
+│   ├── vpc.py             # VPC: flow logs, subnets, NAT
+│   ├── security_groups.py # Security groups: firewall rules
+│   ├── rds.py             # RDS: encryption, backups, multi-AZ
+│   ├── kms.py             # KMS: key rotation, policies
+│   ├── guardduty.py       # GuardDuty: threat detection
+│   ├── backup.py          # AWS Backup: vault, plans
+│   └── manual_evidence.py # Manual evidence import
 ├── reporters/
 │   ├── excel.py           # openpyxl workbook generation
 │   └── manifest.py        # JSON metadata builder
@@ -185,10 +189,17 @@ The tool makes **read-only** API calls to these services:
 
 | Service | API Calls Made | Purpose |
 |---------|---------------|---------|
-| **IAM** | `ListUsers`, `ListMfaDevices`, `GetAccountPasswordPolicy`, `ListAccessKeys`, `GetUser` | User security, credential lifecycle |
+| **IAM** | `ListUsers`, `ListMfaDevices`, `GetAccountPasswordPolicy`, `ListAccessKeys`, `GetUser`, `GetAccessKeyLastUsed` | User security, credential lifecycle |
 | **S3** | `ListBuckets`, `GetBucketEncryption`, `GetPublicAccessBlock`, `GetBucketPolicy`, `GetBucketVersioning`, `GetBucketLogging` | Data protection configuration |
-| **CloudTrail** | `DescribeTrails`, `GetTrailStatus`, `GetEventSelectors` | Audit logging coverage |
+| **CloudTrail** | `DescribeTrails`, `GetTrailStatus` | Audit logging coverage |
 | **AWS Config** | `DescribeConfigurationRecorders`, `DescribeConfigRules`, `GetComplianceSummaryByConfigRule` | Compliance monitoring |
+| **EC2** | `DescribeInstances`, `DescribeInstanceAttribute`, `DescribeSecurityGroups` | Instance security |
+| **VPC** | `DescribeVpcs`, `DescribeFlowLogs`, `DescribeSubnets`, `DescribeNatGateways`, `DescribeRouteTables` | Network configuration |
+| **Security Groups** | `DescribeSecurityGroups`, `DescribeSecurityGroupRules` | Firewall rules |
+| **RDS** | `DescribeDbInstances`, `DescribeDbSubnetGroups`, `DescribeDbParameterGroups` | Database security |
+| **KMS** | `ListKeys`, `GetKeyRotationStatus`, `GetKeyPolicy` | Key management |
+| **GuardDuty** | `ListDetectors`, `GetDetector`, `GetFindingsStatistics` | Threat detection |
+| **Backup** | `ListBackupVaults`, `ListBackupPlans`, `ListRecoveryPoints` | Backup configuration |
 | **STS** | `GetCallerIdentity` | Account identification |
 
 ---
@@ -210,7 +221,8 @@ The tool makes **read-only** API calls to these services:
         "iam:GetAccountPasswordPolicy",
         "iam:ListAccessKeys",
         "iam:GetUser",
-        "iam:GetAccountSummary"
+        "iam:GetAccountSummary",
+        "iam:GetAccessKeyLastUsed"
       ],
       "Resource": "*"
     },
@@ -232,8 +244,7 @@ The tool makes **read-only** API calls to these services:
       "Effect": "Allow",
       "Action": [
         "cloudtrail:DescribeTrails",
-        "cloudtrail:GetTrailStatus",
-        "cloudtrail:GetEventSelectors"
+        "cloudtrail:GetTrailStatus"
       ],
       "Resource": "*"
     },
@@ -245,6 +256,71 @@ The tool makes **read-only** API calls to these services:
         "config:DescribeDeliveryChannels",
         "config:DescribeConfigRules",
         "config:GetComplianceSummaryByConfigRule"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EC2ReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeInstanceAttribute",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeVpcs",
+        "ec2:DescribeSubnets"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "VPCReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeVpcs",
+        "ec2:DescribeFlowLogs",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeNatGateways",
+        "ec2:DescribeRouteTables"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "RDSReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "rds:DescribeDbInstances",
+        "rds:DescribeDbSubnetGroups",
+        "rds:DescribeDbParameterGroups"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "KMSReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "kms:ListKeys",
+        "kms:GetKeyRotationStatus",
+        "kms:GetKeyPolicy",
+        "kms:DescribeKey"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "GuardDutyReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "guardduty:ListDetectors",
+        "guardduty:GetDetector",
+        "guardduty:GetFindingsStatistics"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "BackupReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "backup:ListBackupVaults",
+        "backup:ListBackupPlans",
+        "backup:ListRecoveryPoints"
       ],
       "Resource": "*"
     },
@@ -298,11 +374,11 @@ This tool is designed with security as the top priority.
 # Full collection with all collectors
 python collect.py --profile default --region us-east-1 --output ./evidence-output
 
+# Run specific collectors only (faster for focused audits)
+python collect.py --checks iam,s3,kms --output ./iam-s3-evidence
+
 # Dry run - preview what would be collected (no AWS calls)
 python collect.py --dry-run
-
-# Run specific collectors only (faster for focused audits)
-python collect.py --checks iam,s3 --output ./iam-s3-evidence
 
 # Custom configuration file
 python collect.py --config prod-config.yaml
@@ -310,6 +386,23 @@ python collect.py --config prod-config.yaml
 # Adjust credential inactivity threshold
 python collect.py --inactive-days 60
 ```
+
+### Available Collectors
+
+| Collector | Description |
+|-----------|-------------|
+| `iam` | IAM user security, MFA, password policy |
+| `s3` | S3 bucket encryption, access, policies |
+| `cloudtrail` | CloudTrail logging configuration |
+| `config` | AWS Config compliance monitoring |
+| `ec2` | EC2 instance security |
+| `vpc` | VPC flow logs, subnets, NAT gateways |
+| `security_groups` | Security group firewall rules |
+| `rds` | RDS database encryption, backups |
+| `kms` | KMS key rotation, policies |
+| `guardduty` | GuardDuty threat detection |
+| `backup` | AWS Backup configurations |
+| `manual` | Manual evidence import |
 
 ### CLI Options Reference
 
@@ -319,7 +412,7 @@ python collect.py --inactive-days 60
 | `--region` | AWS region to query | `us-east-1` |
 | `--output` | Output directory for evidence | `./evidence-output` |
 | `--config` | Custom config file path | `config.yaml` |
-| `--checks` | Comma-separated collectors to run | `iam,s3,cloudtrail,config` |
+| `--checks` | Comma-separated collectors to run | All collectors |
 | `--dry-run` | Preview without making AWS calls | `false` |
 | `--inactive-days` | Credential age threshold | `90` |
 
@@ -327,37 +420,29 @@ python collect.py --inactive-days 60
 
 ## Sample Output
 
-> ![Excel Report Preview](sample-output/report-summary.png)
-
-The Excel workbook contains three sheets:
-
-1. **Summary** — Overall pass/fail counts by service
-2. **SOC2** — All findings grouped by Trust Service Criterion
-3. **GDPR** — All findings grouped by Article 32 sub-requirement
+The Excel workbook contains findings grouped by service with:
+- Check ID and description
+- PASS/FAIL/MANUAL_REVIEW status
+- SOC 2 criteria mapping
+- GDPR Article 32 mapping
+- Severity level
+- Remediation recommendation
 
 > **Note:** See the `/sample-output` folder for a full pre-generated evidence package using anonymized data. You can review exactly what the tool produces without running it against your own AWS account.
-
----
-
-## Why I Built This
-
-I've spent years watching engineering teams grind through compliance audits — the same engineers manually collecting evidence, taking screenshots, exporting JSON, and doing the same work twice because no tooling unified SOC 2 and GDPR evidence collection.
-
-I built compliance-harvester to solve that exact problem. The insight was simple: the underlying AWS configurations are the same regardless of which framework you're mapping to. MFA is MFA. S3 encryption is S3 encryption. The only difference is the label auditors expect to see.
-
-This tool demonstrates a few things I care about as an engineer: practical automation over theoretical frameworks, clean code with proper documentation, and solving real problems with minimal complexity. It also shows how to design systems that are read-only by default — a principle more tooling should follow.
-
-If your team is navigating SOC 2 or GDPR and spending engineering time on manual evidence collection, I'd love to talk.
 
 ---
 
 ## Roadmap
 
 - [x] IAM, S3, CloudTrail collectors
-- [x] SOC 2 + GDPR dual mapping
-- [x] Excel + JSON output
-- [ ] AWS Config deep integration
+- [x] EC2, VPC, Security Groups collectors
+- [x] RDS, KMS collectors
+- [x] GuardDuty, Backup collectors
+- [x] Manual evidence import
+- [x] SOC 2 + GDPR dual mapping (28+ controls)
+- [x] Excel + JSON output with recommendations
 - [ ] Azure support (SOC 2 + GDPR)
+- [ ] GCP support
 - [ ] Slack/email alert on FAIL findings
 - [ ] CI/CD pipeline integration (GitHub Actions example)
 
